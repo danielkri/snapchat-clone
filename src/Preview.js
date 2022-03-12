@@ -12,7 +12,16 @@ import CropIcon from "@material-ui/icons/Crop";
 import TimerIcon from "@material-ui/icons/Timer";
 import SendIcon from "@material-ui/icons/Send";
 import { v4 as uuid } from "uuid";
+import {
+  db,
+  storage,
+  ref,
+  getDownloadURL,
+  uploadBytesResumable,
+} from "./firebase";
+import { uploadString } from "firebase/storage";
 import "./Preview.css";
+import { serverTimestamp, collection, addDoc } from "firebase/firestore";
 
 function Preview() {
   const cameraImage = useSelector(selectCameraImage);
@@ -30,8 +39,71 @@ function Preview() {
   };
 
   const sendPost = () => {
+    const metadata = {
+      contentType: "image/jpeg",
+    };
+
     const id = uuid();
-    navigate("/");
+    const storageRef = ref(storage, `posts/${id}`);
+    const uploadTask = uploadBytesResumable(
+      storageRef,
+      cameraImage,
+      "data_url"
+    );
+    // uploadTask.on(
+    //   "state_changed",
+    uploadString(storageRef, cameraImage, "data_url").then(
+      (snapshot) => {
+        getDownloadURL(snapshot.ref).then((url) => {
+          const docRef = addDoc(collection(db, "posts"), {
+            imageUrl: url,
+            username: "Danne",
+            read: false,
+            timestamp: serverTimestamp(),
+            //   profilePic,
+          });
+          navigate("/chats", { replace: true });
+        });
+        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+        // const progress =
+        //   (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        // console.log("Upload is " + progress + "% done");
+        // switch (snapshot.state) {
+        //   case "paused":
+        //     console.log("Upload is paused");
+        //     break;
+        //   case "running":
+        //     console.log("Upload is running");
+        //     break;
+        // }
+      }
+      //   ,
+      //   (error) => {
+      //     console.log(error);
+      //     //   switch (error.code) {
+      //     //     case 'storage/unauthorized':
+      //     //       break;
+      //     //     case 'storage/canceled':
+      //     //       break;
+      //     //     case 'storage/unknown':
+      //     //       break;
+      //     //   }
+      //   },
+      //   () => {
+      //     // Upload completed successfully, now we can get the download URL
+      //     getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+      //       const docRef = addDoc(collection(db, "posts"), {
+      //         imageUrl: url,
+      //         username: "Danne",
+      //         read: false,
+      //         timestamp: serverTimestamp(),
+      //         //   profilePic,
+      //       });
+      //       navigate("/chats", { replace: true });
+      //       //   console.log("File available at", url);
+      //     });
+      //   }
+    );
   };
 
   return (
