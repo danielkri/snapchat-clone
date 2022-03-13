@@ -57,4 +57,5 @@ export {
   ref,
   getDownloadURL,
   uploadBytesResumable,
+  collection,
 };
