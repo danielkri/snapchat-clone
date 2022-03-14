@@ -22,11 +22,13 @@ import {
 import { uploadString } from "firebase/storage";
 import "./Preview.css";
 import { serverTimestamp, collection, addDoc } from "firebase/firestore";
+import { selectUser } from "./features/appSlice";
 
 function Preview() {
   const cameraImage = useSelector(selectCameraImage);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const user = useSelector(selectUser);
 
   useEffect(() => {
     if (!cameraImage) {
@@ -52,58 +54,18 @@ function Preview() {
     );
     // uploadTask.on(
     //   "state_changed",
-    uploadString(storageRef, cameraImage, "data_url").then(
-      (snapshot) => {
-        getDownloadURL(snapshot.ref).then((url) => {
-          const docRef = addDoc(collection(db, "posts"), {
-            imageUrl: url,
-            username: "Danne",
-            read: false,
-            timestamp: serverTimestamp(),
-            //   profilePic,
-          });
-          navigate("/chats", { replace: true });
+    uploadString(storageRef, cameraImage, "data_url").then((snapshot) => {
+      getDownloadURL(snapshot.ref).then((url) => {
+        const docRef = addDoc(collection(db, "posts"), {
+          imageUrl: url,
+          username: user.username,
+          read: false,
+          timestamp: serverTimestamp(),
+          profilePic: user.profilePic,
         });
-        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-        // const progress =
-        //   (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        // console.log("Upload is " + progress + "% done");
-        // switch (snapshot.state) {
-        //   case "paused":
-        //     console.log("Upload is paused");
-        //     break;
-        //   case "running":
-        //     console.log("Upload is running");
-        //     break;
-        // }
-      }
-      //   ,
-      //   (error) => {
-      //     console.log(error);
-      //     //   switch (error.code) {
-      //     //     case 'storage/unauthorized':
-      //     //       break;
-      //     //     case 'storage/canceled':
-      //     //       break;
-      //     //     case 'storage/unknown':
-      //     //       break;
-      //     //   }
-      //   },
-      //   () => {
-      //     // Upload completed successfully, now we can get the download URL
-      //     getDownloadURL(uploadTask.snapshot.ref).then((url) => {
-      //       const docRef = addDoc(collection(db, "posts"), {
-      //         imageUrl: url,
-      //         username: "Danne",
-      //         read: false,
-      //         timestamp: serverTimestamp(),
-      //         //   profilePic,
-      //       });
-      //       navigate("/chats", { replace: true });
-      //       //   console.log("File available at", url);
-      //     });
-      //   }
-    );
+        navigate("/chats", { replace: true });
+      });
+    });
   };
 
   return (
